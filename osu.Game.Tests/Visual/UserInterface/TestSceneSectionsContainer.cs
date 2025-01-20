@@ -81,6 +81,24 @@ namespace osu.Game.Tests.Visual.UserInterface
         }
 
         [Test]
+        public void TestCorrectScrollToWhenContentLoads()
+        {
+            AddRepeatStep("add many sections", () => append(1f), 3);
+
+            AddStep("add section with delayed load content", () =>
+            {
+                container.Add(new TestDelayedLoadSection("delayed"));
+            });
+
+            AddStep("add final section", () => append(0.5f));
+
+            AddStep("scroll to final section", () => container.ScrollTo(container.Children.Last()));
+
+            AddUntilStep("correct section selected", () => container.SelectedSection.Value == container.Children.Last());
+            AddUntilStep("wait for scroll to section", () => container.ScreenSpaceDrawQuad.AABBFloat.Contains(container.Children.Last().ScreenSpaceDrawQuad.AABBFloat));
+        }
+
+        [Test]
         public void TestSelection()
         {
             AddStep("clear", () => container.Clear());
@@ -120,7 +138,7 @@ namespace osu.Game.Tests.Visual.UserInterface
                 AddUntilStep("section top is visible", () =>
                 {
                     var scrollContainer = container.ChildrenOfType<UserTrackingScrollContainer>().Single();
-                    float sectionPosition = scrollContainer.GetChildPosInContent(container.Children[scrollIndex]);
+                    double sectionPosition = scrollContainer.GetChildPosInContent(container.Children[scrollIndex]);
                     return scrollContainer.Current < sectionPosition;
                 });
             }
@@ -194,6 +212,33 @@ namespace osu.Game.Tests.Visual.UserInterface
         {
             InputManager.MoveMouseTo(container);
             InputManager.ScrollVerticalBy(direction);
+        }
+
+        private partial class TestDelayedLoadSection : TestSection
+        {
+            public TestDelayedLoadSection(string label)
+                : base(label)
+            {
+                BackgroundColour = default_colour;
+                Width = 300;
+                AutoSizeAxes = Axes.Y;
+            }
+
+            protected override void LoadComplete()
+            {
+                base.LoadComplete();
+
+                Box box;
+
+                Add(box = new Box
+                {
+                    Alpha = 0.01f,
+                    RelativeSizeAxes = Axes.X,
+                });
+
+                // Emulate an operation that will be inhibited by IsMaskedAway.
+                box.ResizeHeightTo(2000, 50);
+            }
         }
 
         private partial class TestSection : TestBox

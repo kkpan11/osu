@@ -12,6 +12,7 @@ using JetBrains.Annotations;
 using Newtonsoft.Json;
 using osu.Framework.Bindables;
 using osu.Framework.Extensions.ListExtensions;
+using osu.Framework.Extensions.TypeExtensions;
 using osu.Framework.Lists;
 using osu.Game.Audio;
 using osu.Game.Beatmaps;
@@ -38,6 +39,8 @@ namespace osu.Game.Rulesets.Objects
         /// <summary>
         /// Invoked after <see cref="ApplyDefaults"/> has completed on this <see cref="HitObject"/>.
         /// </summary>
+        // TODO: This has no implicit unbind flow. Currently, if a Playfield manages HitObjects it will leave a bound event on this and cause the
+        // playfield to remain in memory.
         public event Action<HitObject> DefaultsApplied;
 
         public readonly Bindable<double> StartTimeBindable = new BindableDouble();
@@ -75,12 +78,6 @@ namespace osu.Game.Rulesets.Objects
         /// This is used only to preload these samples ahead of time.
         /// </summary>
         public virtual IList<HitSampleInfo> AuxiliarySamples => ImmutableList<HitSampleInfo>.Empty;
-
-        /// <summary>
-        /// Legacy BPM multiplier that introduces floating-point errors for rulesets that depend on it.
-        /// DO NOT USE THIS UNLESS 100% SURE.
-        /// </summary>
-        public double? LegacyBpmMultiplier { get; set; }
 
         /// <summary>
         /// Whether this <see cref="HitObject"/> is in Kiai time.
@@ -167,8 +164,19 @@ namespace osu.Game.Rulesets.Objects
         protected void AddNested(HitObject hitObject) => nestedHitObjects.Add(hitObject);
 
         /// <summary>
-        /// Creates the <see cref="Judgement"/> that represents the scoring information for this <see cref="HitObject"/>.
+        /// The <see cref="Judgement"/> that represents the scoring information for this <see cref="HitObject"/>.
         /// </summary>
+        [JsonIgnore]
+        public Judgement Judgement => judgement ??= CreateJudgement();
+
+        private Judgement judgement;
+
+        /// <summary>
+        /// Should be overridden to create a <see cref="Judgement"/> that represents the scoring information for this <see cref="HitObject"/>.
+        /// </summary>
+        /// <remarks>
+        /// For read access, use <see cref="Judgement"/> to avoid unnecessary allocations.
+        /// </remarks>
         [NotNull]
         public virtual Judgement CreateJudgement() => new Judgement();
 
@@ -206,15 +214,31 @@ namespace osu.Game.Rulesets.Objects
         }
 
         /// <summary>
-        /// Create a SampleInfo based on the sample settings of the hit normal sample in <see cref="Samples"/>.
+        /// Create a <see cref="HitSampleInfo"/> based on the sample settings of the first <see cref="HitSampleInfo.HIT_NORMAL"/> sample in <see cref="Samples"/>.
+        /// If no sample is available, sane default settings will be used instead.
         /// </summary>
+        /// <remarks>
+        /// In the case an existing sample exists, all settings apart from the sample name will be inherited. This includes volume, bank and suffix.
+        /// </remarks>
         /// <param name="sampleName">The name of the sample.</param>
         /// <returns>A populated <see cref="HitSampleInfo"/>.</returns>
-        protected HitSampleInfo GetSampleInfo(string sampleName = HitSampleInfo.HIT_NORMAL)
+        public HitSampleInfo CreateHitSampleInfo(string sampleName = HitSampleInfo.HIT_NORMAL)
         {
-            var hitnormalSample = Samples.FirstOrDefault(s => s.Name == HitSampleInfo.HIT_NORMAL);
-            return hitnormalSample == null ? new HitSampleInfo(sampleName) : hitnormalSample.With(newName: sampleName);
+            // As per stable, all non-normal "addition" samples should use the same bank.
+            if (sampleName != HitSampleInfo.HIT_NORMAL)
+            {
+                if (Samples.FirstOrDefault(s => s.Name != HitSampleInfo.HIT_NORMAL) is HitSampleInfo existingAddition)
+                    return existingAddition.With(newName: sampleName);
+            }
+
+            // Fall back to using the normal sample bank otherwise.
+            if (Samples.FirstOrDefault(s => s.Name == HitSampleInfo.HIT_NORMAL) is HitSampleInfo existingNormal)
+                return existingNormal.With(newName: sampleName, newEditorAutoBank: true);
+
+            return new HitSampleInfo(sampleName);
         }
+
+        public override string ToString() => $"{GetType().ReadableName()} @ {StartTime}";
     }
 
     public static class HitObjectExtensions

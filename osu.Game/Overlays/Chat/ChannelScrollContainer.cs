@@ -1,7 +1,5 @@
-// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
-
-#nullable disable
 
 using osu.Framework.Graphics;
 using osu.Game.Graphics.Containers;
@@ -43,13 +41,13 @@ namespace osu.Game.Overlays.Chat
 
         #region Scroll handling
 
-        protected override void OnUserScroll(float value, bool animated = true, double? distanceDecay = null)
+        protected override void OnUserScroll(double value, bool animated = true, double? distanceDecay = null)
         {
             base.OnUserScroll(value, animated, distanceDecay);
             updateTrackState();
         }
 
-        public new void ScrollTo(float value, bool animated = true, double? distanceDecay = null)
+        public new void ScrollTo(double value, bool animated = true, double? distanceDecay = null)
         {
             base.ScrollTo(value, animated, distanceDecay);
             updateTrackState();

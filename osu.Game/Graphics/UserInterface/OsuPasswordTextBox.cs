@@ -1,8 +1,6 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-#nullable disable
-
 using osuTK;
 using osuTK.Graphics;
 using osuTK.Input;
@@ -16,32 +14,29 @@ using osu.Framework.Input;
 using osu.Framework.Input.Events;
 using osu.Framework.Localisation;
 using osu.Framework.Platform;
+using osu.Game.Localisation;
 
 namespace osu.Game.Graphics.UserInterface
 {
-    public partial class OsuPasswordTextBox : OsuTextBox, ISuppressKeyEventLogging
+    public partial class OsuPasswordTextBox : OsuTextBox
     {
         protected override Drawable GetDrawableCharacter(char c) => new FallingDownContainer
         {
             AutoSizeAxes = Axes.Both,
-            Child = new PasswordMaskChar(CalculatedTextSize),
+            Child = new PasswordMaskChar(FontSize),
         };
 
         protected override bool AllowUniqueCharacterSamples => false;
 
-        protected override bool AllowClipboardExport => false;
-
-        protected override bool AllowWordNavigation => false;
-
-        protected override bool AllowIme => false;
-
         private readonly CapsWarning warning;
 
         [Resolved]
-        private GameHost host { get; set; }
+        private GameHost host { get; set; } = null!;
 
         public OsuPasswordTextBox()
         {
+            InputProperties = new TextInputProperties(TextInputType.Password, false);
+
             Add(warning = new CapsWarning
             {
                 Size = new Vector2(20),
@@ -112,7 +107,7 @@ namespace osu.Game.Graphics.UserInterface
 
         private partial class CapsWarning : SpriteIcon, IHasTooltip
         {
-            public LocalisableString TooltipText => "caps lock is active";
+            public LocalisableString TooltipText => CommonStrings.CapsLockIsActive;
 
             public CapsWarning()
             {

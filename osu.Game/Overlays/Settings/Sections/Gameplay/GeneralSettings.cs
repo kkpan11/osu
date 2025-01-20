@@ -1,7 +1,5 @@
-// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
-
-#nullable disable
 
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
@@ -14,7 +12,7 @@ namespace osu.Game.Overlays.Settings.Sections.Gameplay
 {
     public partial class GeneralSettings : SettingsSubsection
     {
-        protected override LocalisableString Header => GameplaySettingsStrings.GeneralHeader;
+        protected override LocalisableString Header => CommonStrings.General;
 
         [BackgroundDependencyLoader]
         private void load(OsuConfigManager config)
@@ -32,6 +30,11 @@ namespace osu.Game.Overlays.Settings.Sections.Gameplay
                 {
                     LabelText = GraphicsSettingsStrings.HitLighting,
                     Current = config.GetBindable<bool>(OsuSetting.HitLighting)
+                },
+                new SettingsCheckbox
+                {
+                    LabelText = GameplaySettingsStrings.StarFountains,
+                    Current = config.GetBindable<bool>(OsuSetting.StarFountains)
                 },
             };
         }

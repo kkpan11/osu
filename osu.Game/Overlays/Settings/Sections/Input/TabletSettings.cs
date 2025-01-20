@@ -3,6 +3,8 @@
 
 #nullable disable
 
+using System.Collections.Generic;
+using System.Linq;
 using osu.Framework;
 using osu.Framework.Allocation;
 using osu.Framework.Bindables;
@@ -23,6 +25,8 @@ namespace osu.Game.Overlays.Settings.Sections.Input
 {
     public partial class TabletSettings : SettingsSubsection
     {
+        public override IEnumerable<LocalisableString> FilterTerms => base.FilterTerms.Concat(new LocalisableString[] { "area" });
+
         public TabletAreaSelection AreaSelection { get; private set; }
 
         private readonly ITabletHandler tabletHandler;
@@ -110,10 +114,10 @@ namespace osu.Game.Overlays.Settings.Sections.Input
                             if (RuntimeInfo.OS == RuntimeInfo.Platform.Windows || RuntimeInfo.OS == RuntimeInfo.Platform.Linux)
                             {
                                 t.NewLine();
-                                var formattedSource = MessageFormatter.FormatText(localisation.GetLocalisedBindableString(TabletSettingsStrings.NoTabletDetectedDescription(
+                                var formattedSource = MessageFormatter.FormatText(localisation.GetLocalisedString(TabletSettingsStrings.NoTabletDetectedDescription(
                                     RuntimeInfo.OS == RuntimeInfo.Platform.Windows
                                         ? @"https://opentabletdriver.net/Wiki/FAQ/Windows"
-                                        : @"https://opentabletdriver.net/Wiki/FAQ/Linux")).Value);
+                                        : @"https://opentabletdriver.net/Wiki/FAQ/Linux")));
                                 t.AddLinks(formattedSource.Text, formattedSource.Links);
                             }
                         }),

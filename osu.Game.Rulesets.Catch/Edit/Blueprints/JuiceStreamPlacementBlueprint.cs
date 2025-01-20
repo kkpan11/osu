@@ -4,6 +4,7 @@
 using osu.Framework.Graphics;
 using osu.Framework.Input;
 using osu.Framework.Input.Events;
+using osu.Framework.Utils;
 using osu.Game.Rulesets.Catch.Edit.Blueprints.Components;
 using osu.Game.Rulesets.Catch.Objects;
 using osu.Game.Rulesets.Edit;
@@ -23,6 +24,8 @@ namespace osu.Game.Rulesets.Catch.Edit.Blueprints
         private int lastEditablePathId = -1;
 
         private InputManager inputManager = null!;
+
+        protected override bool IsValidForPlacement => Precision.DefinitelyBigger(HitObject.Duration, 0);
 
         public JuiceStreamPlacementBlueprint()
         {
@@ -46,7 +49,7 @@ namespace osu.Game.Rulesets.Catch.Edit.Blueprints
         {
             base.LoadComplete();
 
-            inputManager = GetContainingInputManager();
+            inputManager = GetContainingInputManager()!;
 
             BeginPlacement();
         }
@@ -70,7 +73,7 @@ namespace osu.Game.Rulesets.Catch.Edit.Blueprints
                             return true;
 
                         case MouseButton.Right:
-                            EndPlacement(HitObject.Duration > 0);
+                            EndPlacement(true);
                             return true;
                     }
 
@@ -85,10 +88,9 @@ namespace osu.Game.Rulesets.Catch.Edit.Blueprints
             switch (PlacementActive)
             {
                 case PlacementState.Waiting:
-                    if (!(result.Time is double snappedTime)) return;
-
                     HitObject.OriginalX = ToLocalSpace(result.ScreenSpacePosition).X;
-                    HitObject.StartTime = snappedTime;
+                    if (result.Time is double snappedTime)
+                        HitObject.StartTime = snappedTime;
                     break;
 
                 case PlacementState.Active:
@@ -104,21 +106,13 @@ namespace osu.Game.Rulesets.Catch.Edit.Blueprints
             Vector2 startPosition = CatchHitObjectUtils.GetStartPosition(HitObjectContainer, HitObject);
             editablePath.Position = nestedOutlineContainer.Position = scrollingPath.Position = startPosition;
 
-            updateHitObjectFromPath();
-        }
+            if (lastEditablePathId != editablePath.PathId)
+                editablePath.UpdateHitObjectFromPath(HitObject);
+            lastEditablePathId = editablePath.PathId;
 
-        private void updateHitObjectFromPath()
-        {
-            if (lastEditablePathId == editablePath.PathId)
-                return;
-
-            editablePath.UpdateHitObjectFromPath(HitObject);
             ApplyDefaultsToHitObject();
-
             scrollingPath.UpdatePathFrom(HitObjectContainer, HitObject);
             nestedOutlineContainer.UpdateNestedObjectsFrom(HitObjectContainer, HitObject);
-
-            lastEditablePathId = editablePath.PathId;
         }
 
         private double positionToTime(float relativeYPosition)

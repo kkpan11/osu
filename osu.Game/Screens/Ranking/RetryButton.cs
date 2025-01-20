@@ -1,8 +1,6 @@
 ﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-#nullable disable
-
 using osu.Framework.Allocation;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Shapes;
@@ -18,8 +16,8 @@ namespace osu.Game.Screens.Ranking
     {
         private readonly Box background;
 
-        [Resolved(canBeNull: true)]
-        private Player player { get; set; }
+        [Resolved]
+        private Player? player { get; set; }
 
         public RetryButton()
         {
@@ -40,8 +38,6 @@ namespace osu.Game.Screens.Ranking
                     Icon = FontAwesome.Solid.Redo,
                 },
             };
-
-            TooltipText = "retry";
         }
 
         [BackgroundDependencyLoader]
@@ -50,7 +46,14 @@ namespace osu.Game.Screens.Ranking
             background.Colour = colours.Green;
 
             if (player != null)
+            {
+                TooltipText = player is ReplayPlayer ? "replay" : "retry";
                 Action = () => player.Restart();
+            }
+            else
+            {
+                TooltipText = "retry";
+            }
         }
     }
 }

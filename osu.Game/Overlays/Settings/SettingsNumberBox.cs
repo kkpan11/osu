@@ -1,13 +1,11 @@
-// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
+﻿// Copyright (c) ppy Pty Ltd <contact@ppy.sh>. Licensed under the MIT Licence.
 // See the LICENCE file in the repository root for full licence text.
 
-#nullable disable
-
 using osu.Framework.Bindables;
-using osu.Framework.Extensions;
 using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.UserInterface;
+using osu.Framework.Input;
 
 namespace osu.Game.Overlays.Settings
 {
@@ -38,7 +36,6 @@ namespace osu.Game.Overlays.Settings
                 {
                     numberBox = new OutlinedNumberBox
                     {
-                        Margin = new MarginPadding { Top = 5 },
                         RelativeSizeAxes = Axes.X,
                         CommitOnFocusLost = true
                     }
@@ -70,9 +67,12 @@ namespace osu.Game.Overlays.Settings
 
         private partial class OutlinedNumberBox : OutlinedTextBox
         {
-            protected override bool AllowIme => false;
+            public OutlinedNumberBox()
+            {
+                InputProperties = new TextInputProperties(TextInputType.Number, false);
+            }
 
-            protected override bool CanAddCharacter(char character) => character.IsAsciiDigit();
+            protected override bool CanAddCharacter(char character) => char.IsAsciiDigit(character);
 
             public new void NotifyInputError() => base.NotifyInputError();
         }
