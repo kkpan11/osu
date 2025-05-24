@@ -26,6 +26,11 @@ namespace osu.Game.Screens.SelectV2
     {
         public Action<BeatmapInfo>? RequestPresentBeatmap { private get; init; }
 
+        /// <summary>
+        /// From the provided beatmaps, return the most appropriate one for the user's skill.
+        /// </summary>
+        public Func<IEnumerable<BeatmapInfo>, BeatmapInfo>? ChooseRecommendedBeatmap { private get; init; }
+
         public const float SPACING = 3f;
 
         private IBindableList<BeatmapSetInfo> detachedBeatmaps = null!;
@@ -181,8 +186,13 @@ namespace osu.Game.Screens.SelectV2
                     return;
 
                 case BeatmapSetInfo setInfo:
-                    // Selecting a set isn't valid – let's re-select the first difficulty.
-                    CurrentSelection = setInfo.Beatmaps.First();
+                    // Selecting a set isn't valid – let's re-select the first visible difficulty.
+                    if (grouping.SetItems.TryGetValue(setInfo, out var items))
+                    {
+                        var beatmaps = items.Select(i => i.Model).OfType<BeatmapInfo>();
+                        CurrentSelection = ChooseRecommendedBeatmap?.Invoke(beatmaps) ?? beatmaps.First();
+                    }
+
                     return;
 
                 case BeatmapInfo beatmapInfo:
@@ -401,10 +411,10 @@ namespace osu.Game.Screens.SelectV2
         {
             switch (item.Model)
             {
-                case GroupDefinition group:
-                    if (group.Data is StarDifficulty)
-                        return starsGroupPanelPool.Get();
+                case StarDifficultyGroupDefinition:
+                    return starsGroupPanelPool.Get();
 
+                case GroupDefinition:
                     return groupPanelPool.Get();
 
                 case BeatmapInfo:
@@ -423,5 +433,15 @@ namespace osu.Game.Screens.SelectV2
         #endregion
     }
 
-    public record GroupDefinition(object Data, string Title);
+    /// <summary>
+    /// Defines a grouping header for a set of carousel items.
+    /// </summary>
+    /// <param name="Order">The order of this group in the carousel, sorted using ascending order.</param>
+    /// <param name="Title">The title of this group.</param>
+    public record GroupDefinition(int Order, string Title);
+
+    /// <summary>
+    /// Defines a grouping header for a set of carousel items grouped by star difficulty.
+    /// </summary>
+    public record StarDifficultyGroupDefinition(int Order, string Title, StarDifficulty Difficulty) : GroupDefinition(Order, Title);
 }

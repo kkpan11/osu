@@ -243,7 +243,7 @@ namespace osu.Game.Tests.Visual.SongSelectV2
             AddBeatmaps(2, 3);
             WaitForDrawablePanels();
 
-            SortAndGroupBy(SortMode.Difficulty, GroupMode.All);
+            SortAndGroupBy(SortMode.Difficulty, GroupMode.NoGrouping);
             WaitForFiltering();
 
             AddUntilStep("standalone panels displayed", () => GetVisiblePanels<PanelBeatmapStandalone>().Any());
@@ -259,6 +259,40 @@ namespace osu.Game.Tests.Visual.SongSelectV2
             SelectNextPanel();
             Select();
             WaitForSelection(1, 1);
+        }
+
+        [Test]
+        public void TestRecommendedSelection()
+        {
+            AddBeatmaps(5, 3);
+            WaitForDrawablePanels();
+
+            AddStep("set recommendation algorithm", () => BeatmapRecommendationFunction = beatmaps => beatmaps.Last());
+
+            SelectPrevGroup();
+
+            // check recommended was selected
+            SelectNextGroup();
+            WaitForSelection(0, 2);
+
+            // change away from recommended
+            SelectPrevPanel();
+            Select();
+            WaitForSelection(0, 1);
+
+            // next set, check recommended
+            SelectNextGroup();
+            WaitForSelection(1, 2);
+
+            // next set, check recommended
+            SelectNextGroup();
+            WaitForSelection(2, 2);
+
+            // go back to first set and ensure user selection was retained
+            // todo: we don't do that yet. not sure if we will continue to have this.
+            // SelectPrevGroup();
+            // SelectPrevGroup();
+            // WaitForSelection(0, 1);
         }
 
         private void checkSelectionIterating(bool isIterating)
